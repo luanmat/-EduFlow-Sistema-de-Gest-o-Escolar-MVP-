@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
+import { validateAttendanceEntry } from './lib/attendance-validation.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -247,6 +248,10 @@ app.post('/api/frequencia', authMiddleware, (req, res) => {
   const { turma_id, data, chamada } = req.body;
   if (!turma_id || !data || !Array.isArray(chamada)) {
     return res.status(400).json({ error: 'Dados incompletos para registro da chamada' });
+  }
+
+  if (!chamada.every(validateAttendanceEntry)) {
+    return res.status(400).json({ error: 'Cada registro deve conter aluno_id válido e status P, F ou FJ' });
   }
 
   const upsert = db.prepare(`
