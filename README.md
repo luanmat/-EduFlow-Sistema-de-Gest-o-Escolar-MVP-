@@ -40,6 +40,12 @@ Entre seus objetivos estão:
 
 ## 🏁 Como Executar o Projeto
 
+## Como executar o projeto
+
+1. Acesse o repositório no GitHub.
+2. Consulte os arquivos e a documentação do projeto.
+3. Siga as instruções de configuração disponíveis.
+
 ### Pré-requisitos
 - [Node.js](https://nodejs.org/) v22 ou superior instalado.
 
