@@ -30,12 +30,12 @@ MVP de gestão escolar com foco no registro de chamadas e no acompanhamento da f
 
 ```bash
 git clone https://github.com/luanmat/-EduFlow-Sistema-de-Gest-o-Escolar-MVP-.git
-cd -- ./-EduFlow-Sistema-de-Gest-o-Escolar-MVP-
+cd -- -EduFlow-Sistema-de-Gest-o-Escolar-MVP-
 npm install
 npm start
 ```
 
-O servidor informa a porta de execução no terminal. **Nota de revisão:** no código atual, o Express procura arquivos estáticos na pasta `public/`, enquanto o `index.html` está na raiz do repositório. Essa divergência precisa ser corrigida (ajustando o caminho servido ou a localização do arquivo) e validada antes de considerar a interface acessível pelo navegador.
+O servidor usa `express.static` para disponibilizar os arquivos da pasta `public/`. A interface principal está em `public/index.html`.
 
 ## 🔑 Credenciais de demonstração
 
@@ -46,16 +46,18 @@ O código cria uma conta de demonstração quando a tabela de usuários está va
 
 Use somente em ambiente local de demonstração. Não reutilize essas credenciais em produção.
 
-## 📂 Estrutura atual do repositório
+## 📂 Estrutura do projeto
 
 ```text
-├── README.md
-├── index.html
-├── server.js
-├── package.json
-├── package-lock.json
-└── escola.db             # arquivo SQLite atualmente versionado
+├── public/
+│   └── index.html      # Interface SPA completa e responsiva
+├── escola.db           # Banco SQLite gerado automaticamente na inicialização
+├── package.json        # Dependências e scripts
+├── server.js           # API REST, autenticação e regras de negócio
+└── README.md           # Documentação do projeto
 ```
+
+> `package-lock.json` também pode permanecer no repositório para registrar versões exatas das dependências. O arquivo `escola.db` deve conter somente dados fictícios/sanitizados; nunca publique dados reais de estudantes ou responsáveis.
 
 ## 🔎 Auto-revisão técnica — achados e ações recomendadas
 
@@ -64,7 +66,6 @@ Esta revisão foi feita por inspeção estática dos arquivos do repositório. O
 ### Arquitetura e manutenção
 
 - O backend está concentrado em `server.js`, incluindo inicialização do banco, rotas e autenticação. Em uma evolução do MVP, separar configuração, acesso a dados, middlewares e rotas facilitaria testes e manutenção.
-- Há divergência entre o caminho estático configurado (`public/`) e a localização atual de `index.html` (raiz). Alinhar a estrutura e validar a inicialização local.
 
 ### Segurança
 
