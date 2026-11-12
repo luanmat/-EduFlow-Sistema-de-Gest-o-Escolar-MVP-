@@ -37,6 +37,16 @@ npm start
 
 O servidor usa `express.static` para disponibilizar os arquivos da pasta `public/`. A interface principal está em `public/index.html`.
 
+### Testes automatizados e cobertura
+
+Execute os testes de integração da API com Node.js 22 ou superior:
+
+```bash
+npm test
+```
+
+O comando usa o test runner nativo do Node.js e apresenta o resumo de cobertura ao final. Os testes utilizam um banco SQLite em memória (`NODE_ENV=test`), sem alterar o banco local. O workflow do GitHub Actions também executa os testes em pushes e pull requests.
+
 ## 🔑 Credenciais de demonstração
 
 O código cria uma conta de demonstração quando a tabela de usuários está vazia:
@@ -51,6 +61,10 @@ Use somente em ambiente local de demonstração. Não reutilize essas credenciai
 ```text
 ├── public/
 │   └── index.html      # Interface SPA completa e responsiva
+├── tests/
+│   └── server.test.js  # Testes de integração da API
+├── .github/workflows/
+│   └── tests.yml       # Execução automática no GitHub Actions
 ├── escola.db           # Banco SQLite gerado automaticamente na inicialização
 ├── package.json        # Dependências e scripts
 ├── server.js           # API REST, autenticação e regras de negócio
@@ -77,7 +91,7 @@ Esta revisão foi feita por inspeção estática dos arquivos do repositório. O
 ### Legibilidade e testes
 
 - Manter documentação e estrutura alinhadas ao código efetivamente versionado.
-- Criar testes para autenticação, autorização, validação dos dados recebidos e operações de frequência. Os testes não foram executados como parte desta revisão documental.
+- Foram adicionados testes de integração para login, autenticação de rota protegida, listagem de turmas e validação dos parâmetros de frequência. A execução real e o percentual de cobertura devem ser confirmados pelo resultado do workflow do GitHub Actions (`Actions`) ou por `npm test` em ambiente Node.js 22+.
 
 ## 📝 Licença
 
