@@ -168,6 +168,16 @@ test('integração: consulta e registra frequência da turma', async () => {
   });
   assert.equal(invalid.status, 400);
 
+  const invalidEntry = await api('/api/frequencia', {
+    method: 'POST',
+    body: JSON.stringify({
+      turma_id: turmaId,
+      data: date,
+      chamada: [{ aluno_id: 0, status: 'A' }]
+    })
+  });
+  assert.equal(invalidEntry.status, 400);
+
   const saved = await api('/api/frequencia', {
     method: 'POST',
     body: JSON.stringify({
