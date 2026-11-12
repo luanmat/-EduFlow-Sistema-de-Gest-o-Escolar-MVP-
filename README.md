@@ -39,13 +39,13 @@ O servidor usa `express.static` para disponibilizar os arquivos da pasta `public
 
 ### Testes automatizados e cobertura
 
-Execute os testes de integração da API com Node.js 22 ou superior:
+Execute a suíte completa com Node.js 22 ou superior:
 
 ```bash
 npm test
 ```
 
-O comando usa o test runner nativo do Node.js e apresenta o resumo de cobertura ao final. Os testes utilizam um banco SQLite em memória (`NODE_ENV=test`), sem alterar o banco local. O workflow do GitHub Actions também executa os testes em pushes e pull requests.
+A suíte combina testes unitários da validação de frequência (`tests/attendance-validation.test.js`) e testes de integração das rotas HTTP, autenticação e persistência SQLite (`tests/server.test.js`). Também é possível executar cada grupo separadamente com `npm run test:unit` e `npm run test:integration`. O runner nativo do Node.js apresenta o resumo de cobertura ao final de `npm test`. Os testes de integração usam SQLite em memória (`NODE_ENV=test`), sem alterar o banco local. O GitHub Actions executa `npm ci` e `npm test` automaticamente em pushes na branch de revisão e em pull requests para `main`.
 
 ## 🔑 Credenciais de demonstração
 
@@ -61,7 +61,10 @@ Use somente em ambiente local de demonstração. Não reutilize essas credenciai
 ```text
 ├── public/
 │   └── index.html      # Interface SPA completa e responsiva
+├── lib/
+│   └── attendance-validation.js # Validação reutilizável de frequência
 ├── tests/
+│   ├── attendance-validation.test.js # Testes unitários
 │   └── server.test.js  # Testes de integração da API
 ├── .github/workflows/
 │   └── tests.yml       # Execução automática no GitHub Actions
@@ -91,7 +94,7 @@ Esta revisão foi feita por inspeção estática dos arquivos do repositório. O
 ### Legibilidade e testes
 
 - Manter documentação e estrutura alinhadas ao código efetivamente versionado.
-- Foram adicionados testes de integração para login, autenticação de rota protegida, listagem de turmas e validação dos parâmetros de frequência. A execução real e o percentual de cobertura devem ser confirmados pelo resultado do workflow do GitHub Actions (`Actions`) ou por `npm test` em ambiente Node.js 22+.
+- Foram adicionados testes unitários para a validação dos registros de frequência e testes de integração para login, autorização, turmas, alunos, frequência, histórico e interface estática. O backend rejeita registros de frequência com identificador ou status inválido. A execução real e o percentual de cobertura devem ser confirmados pelo resultado do workflow `Automated tests` na aba `Actions` ou por `npm test` em ambiente Node.js 22+.
 
 ## 📝 Licença
 
