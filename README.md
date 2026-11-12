@@ -17,7 +17,16 @@ Um MVP completo, funcional e leve para gestão escolar, desenvolvido com foco em
   - Consulta detalhada por período e turma.
   - Cálculo automático da taxa percentual de frequência.
   - Indicador visual de alerta de infrequência (< 75% conforme a LDB).
+## Funcionalidades do EduFlow
 
+O EduFlow é um sistema de gestão escolar que tem como
+objetivo facilitar a organização das informações escolares.
+
+Entre seus objetivos estão:
+- Organização de informações de alunos.
+- Gestão de professores.
+- Acompanhamento das atividades escolares.
+- Centralização das informações da instituição.
 ---
 
 ## 🛠️ Tecnologias Utilizadas
