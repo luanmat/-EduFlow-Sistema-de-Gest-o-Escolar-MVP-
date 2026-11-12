@@ -66,7 +66,7 @@ O sistema já inicializa o banco SQLite com uma turma, alunos e histórico de te
 - **E-mail:** `admin@escola.com`
 - **Senha:** `admin123`
 
----
+
 
 ## 📂 Estrutura do Projeto
 
