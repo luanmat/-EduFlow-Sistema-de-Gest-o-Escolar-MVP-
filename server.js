@@ -4,21 +4,21 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 3000;
-const JWT_SECRET = 'escola_secret_key_super_segura_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'escola_secret_key_super_segura_2026';
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Inicializa banco de dados SQLite local
-const db = new DatabaseSync('escola.db');
+const db = new DatabaseSync(process.env.NODE_ENV === 'test' ? ':memory:' : (process.env.DB_PATH || 'escola.db'));
 
 // Criação das tabelas
 db.exec(`
@@ -320,7 +320,10 @@ app.get('/api/historico', authMiddleware, (req, res) => {
   res.json({ registros, estatisticas });
 });
 
-app.listen(PORT, () => {
+export { app, db };
+
+const isMainModule = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMainModule) app.listen(PORT, () => {
   console.log(`\n=================================================`);
   console.log(`🚀 Sistema de Gestão Escolar (MVP) Rodando!`);
   console.log(`📍 Acesse em: http://localhost:${PORT}`);
