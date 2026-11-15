@@ -1,99 +1,138 @@
 # EduFlow — Sistema de Gestão Escolar
 
-MVP web para apoiar a organização escolar, o cadastro de alunos e turmas, o lançamento diário de frequência e a consulta de históricos e relatórios.
+O EduFlow é um MVP web para apoiar a rotina de gestão escolar. A aplicação reúne cadastro de alunos e turmas, lançamento de frequência e consulta de históricos e relatórios.
+
+> **Situação da publicação:** o repositório contém a configuração para deploy no Render, mas a aplicação ainda precisa ser implantada no painel do Render para receber uma URL pública de produção. Não use o endereço do GitHub como endereço de produção.
 
 ## Funcionalidades
 
-- Autenticação de usuários com JWT e senhas armazenadas com bcryptjs.
-- Cadastro, listagem e exclusão de turmas.
-- Cadastro, consulta e exclusão de alunos, com vínculo à turma.
-- Lançamento de frequência: presente (P), falta (F) e falta justificada (FJ).
-- Histórico de frequência com filtros por turma, aluno e período e estatísticas por estudante.
+- **Autenticação:** login com JWT e senhas armazenadas com bcryptjs.
+- **Gestão de turmas:** cadastro, listagem e exclusão de turmas.
+- **Gestão de alunos:** cadastro, consulta e exclusão de alunos, com vínculo à turma e dados de contato dos responsáveis.
+- **Frequência:** lançamento de presença (P), falta (F) e falta justificada (FJ), com observações.
+- **Histórico e relatórios:** consulta por turma, aluno e período, com indicadores de frequência.
 
 ## Tecnologias
 
-- **Runtime e backend:** Node.js 22+ e Express.
-- **Frontend:** HTML5, JavaScript, Tailwind CSS e Font Awesome.
-- **Banco de dados:** SQLite nativo por meio de `node:sqlite`.
-- **Autenticação:** JSON Web Token e bcryptjs.
+| Camada | Tecnologias |
+|---|---|
+| Runtime e backend | Node.js 22+, Express 4 |
+| Frontend | HTML5, JavaScript, Tailwind CSS e Font Awesome |
+| Banco de dados | SQLite nativo por meio de `node:sqlite` |
+| Autenticação | JSON Web Token (JWT) e bcryptjs |
+| Testes | Test runner nativo do Node.js (`node:test`) |
+| CI | GitHub Actions |
+| Deploy preparado | Render Blueprint (`render.yaml`) |
+
+## Requisitos
+
+- Node.js 22 ou superior.
+- npm.
+- Para o deploy no Render com persistência SQLite, um serviço com disco persistente.
 
 ## Executar localmente
 
-Pré-requisito: Node.js 22 ou superior.
+1. Clone o repositório e entre na pasta do projeto.
+2. Instale as dependências:
+   ```bash
+   npm ci
+   ```
+3. Inicie o servidor:
+   ```bash
+   npm start
+   ```
+4. Abra http://localhost:3000 no navegador.
 
-```bash
-npm ci
-npm start
-```
+Em um banco local vazio, no modo de desenvolvimento, o sistema cria uma conta e dados fictícios para demonstração:
 
-Acesse http://localhost:3000.
+- **E-mail:** `admin@escola.com`
+- **Senha:** `admin123`
 
-Em um banco local vazio, o modo de desenvolvimento cria uma conta e dados fictícios para demonstração:
-
-- E-mail: `admin@escola.com`
-- Senha: `admin123`
-
-Essas credenciais são exclusivas para desenvolvimento/testes. Não são utilizadas no modo de produção.
+Essas credenciais são exclusivas do modo de desenvolvimento/testes. Não são utilizadas automaticamente em produção.
 
 ## Testes automatizados
+
+Execute:
 
 ```bash
 npm test
 ```
 
-Os testes de fumaça verificam o endpoint de saúde, a entrega do frontend, o login de demonstração e o bloqueio de uma rota protegida sem token. A execução apresenta também o resumo de cobertura do Node.js.
+A suíte de smoke tests verifica:
+1. O endpoint de saúde `GET /healthz`.
+2. A entrega da interface pela rota raiz.
+3. O login local de demonstração e a geração de token JWT.
+4. O bloqueio de uma rota protegida quando não há token.
+
+O comando também exibe o relatório de cobertura do Node.js. O GitHub Actions executa `npm ci` e `npm test` em pushes para `main` e para a branch de preparação, além de pull requests direcionados à `main`.
 
 ## Deploy no Render
 
-O arquivo `render.yaml` contém um Blueprint para criar o serviço web:
+O arquivo `render.yaml` define um Blueprint para publicar o EduFlow como Web Service Node.js.
 
-- Build command: `npm ci`
-- Start command: `npm start`
-- Health check: `/healthz`
-- Banco SQLite: `/var/data/escola.db`
-- Disco persistente: `/var/data` (1 GB)
-- Segredo JWT gerado pelo Render.
+### Configuração prevista
 
-### Publicar
+- **Build Command:** `npm ci`
+- **Start Command:** `npm start`
+- **Health Check Path:** `/healthz`
+- **Porta:** fornecida pelo Render por meio de `PORT`.
+- **Host:** `0.0.0.0`.
+- **SQLite:** `/var/data/escola.db`.
+- **Disco persistente:** montado em `/var/data`, com 1 GB.
+- **JWT_SECRET:** gerado pelo Render.
 
-1. No Render, selecione **New** → **Blueprint**.
-2. Conecte este repositório e selecione a branch que contém o `render.yaml`.
-3. Revise a configuração e confirme a criação do serviço.
-4. Informe os valores de `ADMIN_EMAIL` e `ADMIN_PASSWORD` quando solicitados. Use uma senha forte com pelo menos 12 caracteres.
-5. Aguarde o deploy terminar e abra a URL pública fornecida pelo Render.
+### Publicar usando o Blueprint
 
-**Importante sobre persistência:** o serviço está configurado com um disco persistente, disponível em plano pago do Render. Não remova o disco nem altere `DB_PATH` para um caminho fora de `/var/data`, caso contrário o arquivo SQLite poderá ser perdido em reinicializações ou novos deploys. O disco do Render é conectado a uma única instância do serviço e não deve ser compartilhado entre várias instâncias.
+1. Mescle o pull request de preparação para deploy na branch `main`.
+2. Entre em https://dashboard.render.com/.
+3. Selecione **New → Blueprint**.
+4. Conecte o repositório EduFlow e escolha a branch `main`.
+5. Confira os recursos e custos descritos pelo Render antes de confirmar a criação.
+6. Informe `ADMIN_EMAIL` e `ADMIN_PASSWORD`. Use um e-mail administrativo válido e uma senha exclusiva, forte e com pelo menos 12 caracteres.
+7. Aguarde o deploy terminar e abra a URL HTTPS fornecida pelo Render.
 
-### Monitoramento
+O serviço definido em `render.yaml` usa o plano Starter para suportar o disco persistente. Verifique o preço atual no painel do Render antes de confirmar. O disco é necessário para preservar o arquivo SQLite após reinicializações e novos deploys; sem armazenamento persistente, o arquivo local pode ser perdido. A configuração é destinada a uma única instância, não a múltiplas instâncias compartilhando o mesmo arquivo SQLite.
 
-O endpoint `GET /healthz` verifica se o processo consegue consultar o SQLite. Em funcionamento normal, responde HTTP 200:
+### Variáveis de ambiente
+
+| Variável | Finalidade |
+|---|---|
+| `PORT` | Porta definida automaticamente pela plataforma. |
+| `HOST` | Interface de rede; padrão `0.0.0.0`. |
+| `NODE_ENV` | Definir como `production` no ambiente publicado. |
+| `JWT_SECRET` | Segredo de assinatura JWT; obrigatório em produção e com pelo menos 32 caracteres. O Blueprint solicita geração automática. |
+| `DB_PATH` | Caminho do banco SQLite; no Render, `/var/data/escola.db`. |
+| `ADMIN_EMAIL` | E-mail do administrador criado na primeira inicialização do banco de produção. |
+| `ADMIN_PASSWORD` | Senha inicial do administrador; mínimo de 12 caracteres. |
+| `ADMIN_NAME` | Nome exibido para a conta administrativa (opcional). |
+| `CORS_ORIGINS` | Origens adicionais autorizadas, separadas por vírgula, caso a API seja chamada de outro domínio. |
+
+O banco é criado automaticamente se não existir. Dados de demonstração são incluídos apenas fora do ambiente de produção. Os arquivos `.env` e bancos `*.db` são ignorados pelo Git e não devem ser enviados ao repositório.
+
+## Monitoramento e disponibilidade
+
+A rota `GET /healthz` executa uma consulta simples ao SQLite. Se a aplicação e o banco estiverem operacionais, retorna HTTP 200:
 
 ```json
 { "status": "ok" }
 ```
 
-Configure o Render para usar esse endpoint como health check (já definido no Blueprint). Para alertas externos de indisponibilidade, cadastre a URL pública terminada em `/healthz` em um monitor HTTP, como o UptimeRobot.
+O Render utiliza essa rota como health check por meio da configuração `healthCheckPath` do Blueprint. Para receber alertas externos de indisponibilidade, depois do deploy:
 
-## Variáveis de ambiente
+1. Crie uma conta em https://uptimerobot.com/.
+2. Adicione um monitor do tipo **HTTP(s)**.
+3. Informe a URL pública do serviço terminada em `/healthz`.
+4. Configure o e-mail de notificação.
+5. Confira o status **UP** no painel e os alertas quando houver falha.
 
-| Variável | Finalidade |
-|---|---|
-| `PORT` | Porta fornecida pela plataforma de hospedagem. |
-| `HOST` | Interface de rede; padrão `0.0.0.0`. |
-| `NODE_ENV` | Use `production` no ambiente publicado. |
-| `JWT_SECRET` | Segredo JWT. Obrigatório em produção e deve ter ao menos 32 caracteres. |
-| `DB_PATH` | Caminho do arquivo SQLite. No Render: `/var/data/escola.db`. |
-| `ADMIN_EMAIL` | E-mail da conta administrativa criada na primeira inicialização do banco de produção. |
-| `ADMIN_PASSWORD` | Senha forte para a conta administrativa inicial (mínimo de 12 caracteres). |
-| `ADMIN_NAME` | Nome da conta administrativa (opcional). |
-| `CORS_ORIGINS` | Lista separada por vírgulas de origens autorizadas, somente se a API for chamada de outro domínio. |
+**Nota:** a rota de saúde e a configuração de health check estão no código. O monitor externo do UptimeRobot só estará ativo depois de ser cadastrado na conta.
 
-O banco local `*.db` e arquivos `.env` são ignorados pelo Git. Em produção, o sistema não cria alunos ou turmas de demonstração.
-
-## Estrutura
+## Estrutura do projeto
 
 ```text
-├── .github/workflows/deploy-readiness.yml
+├── .github/
+│   └── workflows/
+│       └── deploy-readiness.yml
 ├── public/
 │   └── index.html
 ├── tests/
@@ -105,3 +144,15 @@ O banco local `*.db` e arquivos `.env` são ignorados pelo Git. Em produção, o
 ├── server.js
 └── README.md
 ```
+
+## Próximas evoluções
+
+- Aprimorar a modularização das rotas, regras de negócio e acesso ao banco.
+- Reforçar os controles de segurança e autorização por perfil.
+- Ampliar os testes de integração e cobertura das funcionalidades.
+- Validar a acessibilidade com usuários e tecnologias assistivas.
+- Avaliar migração para PostgreSQL caso a necessidade de acesso concorrente e escalabilidade aumente.
+
+## Licença
+
+Distribuído sob a licença MIT. Consulte o arquivo `LICENSE` para mais informações.
