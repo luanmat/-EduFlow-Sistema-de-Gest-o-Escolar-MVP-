@@ -4,7 +4,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
+import { mkdirSync } from 'node:fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -61,51 +62,57 @@ db.exec(`
   );
 `);
 
-// Seed inicial se o banco estiver vazio
+// Inicializa a conta administrativa apenas quando o banco está vazio.
+// Em produção, as credenciais iniciais vêm das variáveis ADMIN_EMAIL e ADMIN_PASSWORD.
 const userCount = db.prepare('SELECT count(*) as count FROM usuarios').get().count;
 if (userCount === 0) {
-  const hash = bcrypt.hashSync('admin123', 8);
+  const adminEmail = isProduction ? process.env.ADMIN_EMAIL : (process.env.ADMIN_EMAIL || 'admin@escola.com');
+  const adminPassword = isProduction ? process.env.ADMIN_PASSWORD : (process.env.ADMIN_PASSWORD || 'admin123');
+
+  if (!adminEmail || !adminPassword || (isProduction && adminPassword.length < 12)) {
+    throw new Error('Para a primeira inicialização em produção, configure ADMIN_EMAIL e ADMIN_PASSWORD (mínimo de 12 caracteres).');
+  }
+
+  const hash = bcrypt.hashSync(adminPassword, 12);
   db.prepare(`
     INSERT INTO usuarios (nome, email, senha, perfil)
     VALUES (?, ?, ?, ?)
-  `).run('Coordenador Pedagógico', 'admin@escola.com', hash, 'Administrador');
+  `).run(process.env.ADMIN_NAME || 'Coordenador Pedagógico', adminEmail, hash, 'Administrador');
 
-  // Turma padrão
-  const turma1 = db.prepare(`
-    INSERT INTO turmas (nome, ano_letivo, turno, sala)
-    VALUES (?, ?, ?, ?)
-  `).run('9º Ano A - Fundamental', 2026, 'Matutino', 'Sala 102');
+  // Dados fictícios são criados somente em desenvolvimento/testes.
+  if (!isProduction) {
+    const turma1 = db.prepare(`
+      INSERT INTO turmas (nome, ano_letivo, turno, sala)
+      VALUES (?, ?, ?, ?)
+    `).run('9º Ano A - Fundamental', 2026, 'Matutino', 'Sala 102');
 
-  const turmaId = turma1.lastInsertRowid;
+    const turmaId = turma1.lastInsertRowid;
+    const insertAluno = db.prepare(`
+      INSERT INTO alunos (nome, matricula, email_responsavel, telefone_responsavel, turma_id)
+      VALUES (?, ?, ?, ?, ?)
+    `);
 
-  // Alunos padrão
-  const insertAluno = db.prepare(`
-    INSERT INTO alunos (nome, matricula, email_responsavel, telefone_responsavel, turma_id)
-    VALUES (?, ?, ?, ?, ?)
-  `);
+    insertAluno.run('Arthur Silva Santos', 'MAT2026001', 'responsavel.arthur@email.com', '(11) 98765-4321', turmaId);
+    insertAluno.run('Beatriz Lima Oliveira', 'MAT2026002', 'responsavel.beatriz@email.com', '(11) 97654-3210', turmaId);
+    insertAluno.run('Caio Mendes Ferreira', 'MAT2026003', 'responsavel.caio@email.com', '(11) 96543-2109', turmaId);
+    insertAluno.run('Daniela Souza Costa', 'MAT2026004', 'responsavel.daniela@email.com', '(11) 95432-1098', turmaId);
 
-  insertAluno.run('Arthur Silva Santos', 'MAT2026001', 'responsavel.arthur@email.com', '(11) 98765-4321', turmaId);
-  insertAluno.run('Beatriz Lima Oliveira', 'MAT2026002', 'responsavel.beatriz@email.com', '(11) 97654-3210', turmaId);
-  insertAluno.run('Caio Mendes Ferreira', 'MAT2026003', 'responsavel.caio@email.com', '(11) 96543-2109', turmaId);
-  insertAluno.run('Daniela Souza Costa', 'MAT2026004', 'responsavel.daniela@email.com', '(11) 95432-1098', turmaId);
+    const insertFreq = db.prepare(`
+      INSERT INTO frequencias (aluno_id, turma_id, data, status, observacao)
+      VALUES (?, ?, ?, ?, ?)
+    `);
 
-  // Registro de teste nos dias anteriores
-  const insertFreq = db.prepare(`
-    INSERT INTO frequencias (aluno_id, turma_id, data, status, observacao)
-    VALUES (?, ?, ?, ?, ?)
-  `);
+    insertFreq.run(1, turmaId, '2026-11-09', 'P', '');
+    insertFreq.run(2, turmaId, '2026-11-09', 'P', '');
+    insertFreq.run(3, turmaId, '2026-11-09', 'F', 'Sem aviso prévio');
+    insertFreq.run(4, turmaId, '2026-11-09', 'P', '');
+    insertFreq.run(1, turmaId, '2026-11-10', 'P', '');
+    insertFreq.run(2, turmaId, '2026-11-10', 'FJ', 'Atestado médico');
+    insertFreq.run(3, turmaId, '2026-11-10', 'P', '');
+    insertFreq.run(4, turmaId, '2026-11-10', 'P', '');
 
-  insertFreq.run(1, turmaId, '2026-11-09', 'P', '');
-  insertFreq.run(2, turmaId, '2026-11-09', 'P', '');
-  insertFreq.run(3, turmaId, '2026-11-09', 'F', 'Sem aviso prévio');
-  insertFreq.run(4, turmaId, '2026-11-09', 'P', '');
-
-  insertFreq.run(1, turmaId, '2026-11-10', 'P', '');
-  insertFreq.run(2, turmaId, '2026-11-10', 'FJ', 'Atestado médico');
-  insertFreq.run(3, turmaId, '2026-11-10', 'P', '');
-  insertFreq.run(4, turmaId, '2026-11-10', 'P', '');
-
-  console.log('✅ Dados de teste gerados com sucesso!');
+    console.log('Dados fictícios de demonstração gerados.');
+  }
 }
 
 // Middleware de Autenticação
@@ -212,7 +219,8 @@ app.post('/api/alunos', authMiddleware, (req, res) => {
     if (err.message.includes('UNIQUE constraint failed')) {
       return res.status(400).json({ error: 'Matrícula já cadastrada no sistema' });
     }
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao cadastrar aluno:', err);
+    res.status(500).json({ error: 'Não foi possível cadastrar o aluno.' });
   }
 });
 
@@ -320,11 +328,15 @@ app.get('/api/historico', authMiddleware, (req, res) => {
   res.json({ registros, estatisticas });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n=================================================`);
-  console.log(`🚀 Sistema de Gestão Escolar (MVP) Rodando!`);
-  console.log(`📍 Acesse em: http://localhost:${PORT}`);
-  console.log(`👤 Usuário de Teste: admin@escola.com`);
-  console.log(`🔑 Senha de Teste: admin123`);
-  console.log(`=================================================\n`);
-});
+export { app, db };
+
+const isMainModule = process.argv[1]
+  && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isMainModule) {
+  app.listen(PORT, HOST, () => {
+    console.log(`EduFlow iniciado em ${HOST}:${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/healthz`);
+    console.log(`Banco SQLite: ${dbPath}`);
+  });
+}
