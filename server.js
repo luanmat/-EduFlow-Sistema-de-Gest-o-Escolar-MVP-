@@ -11,15 +11,49 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
-const JWT_SECRET = 'escola_secret_key_super_segura_2026';
+const PORT = Number(process.env.PORT) || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
+const isProduction = process.env.NODE_ENV === 'production';
+const JWT_SECRET = process.env.JWT_SECRET || (isProduction ? null : 'escola_secret_key_super_segura_2026');
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+if (!JWT_SECRET || (isProduction && JWT_SECRET.length < 32)) {
+  throw new Error('Configure JWT_SECRET com pelo menos 32 caracteres no ambiente de produção.');
+}
 
-// Inicializa banco de dados SQLite local
-const db = new DatabaseSync('escola.db');
+const allowedOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (allowedOrigins.length > 0) {
+  app.use(cors({ origin: allowedOrigins }));
+}
+
+app.set('trust proxy', 1);
+app.use(express.json({ limit: '1mb' }));
+
+// A interface é servida a partir de public/.
+const publicDirectory = path.join(__dirname, 'public');
+app.use(express.static(publicDirectory));
+
+// Permite armazenar o SQLite em um disco persistente (ex.: /var/data/escola.db).
+const dbPath = process.env.DB_PATH || path.join(__dirname, 'escola.db');
+if (dbPath !== ':memory:') {
+  mkdirSync(path.dirname(path.resolve(dbPath)), { recursive: true });
+}
+const db = new DatabaseSync(dbPath);
+db.exec('PRAGMA foreign_keys = ON;');
+
+// Health check para o Render e serviços externos de monitoramento.
+app.get('/healthz', (req, res) => {
+  try {
+    db.prepare('SELECT 1').get();
+    return res.status(200).json({ status: 'ok' });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    return res.status(503).json({ status: 'unavailable' });
+  }
+});
 
 // Criação das tabelas
 db.exec(`
@@ -120,7 +154,8 @@ function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ error: 'Token não fornecido' });
 
-  const token = authHeader.split(' ')[1];
+  const [scheme, token] = authHeader.split(' ');
+  if (scheme !== 'Bearer' || !token) return res.status(401).json({ error: 'Formato de token inválido' });
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) return res.status(401).json({ error: 'Token inválido ou expirado' });
     req.usuario = decoded;
