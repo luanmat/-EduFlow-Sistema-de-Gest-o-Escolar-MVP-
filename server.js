@@ -37,7 +37,9 @@ const publicDirectory = path.join(__dirname, 'public');
 app.use(express.static(publicDirectory));
 
 // Permite armazenar o SQLite em um disco persistente (ex.: /var/data/escola.db).
-const dbPath = process.env.DB_PATH || path.join(__dirname, 'escola.db');
+// Vercel functions have a read-only filesystem except for temporary /tmp storage.
+// Use /tmp only for demonstrations; it is not persistent between function instances.
+const dbPath = process.env.DB_PATH || (process.env.VERCEL ? '/tmp/escola.db' : path.join(__dirname, 'escola.db'));
 if (dbPath !== ':memory:') {
   mkdirSync(path.dirname(path.resolve(dbPath)), { recursive: true });
 }
@@ -364,11 +366,12 @@ app.get('/api/historico', authMiddleware, (req, res) => {
 });
 
 export { app, db };
+export default app;
 
 const isMainModule = process.argv[1]
   && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-if (isMainModule) {
+if (isMainModule && !process.env.VERCEL) {
   app.listen(PORT, HOST, () => {
     console.log(`EduFlow iniciado em ${HOST}:${PORT}`);
     console.log(`Health check: http://localhost:${PORT}/healthz`);
