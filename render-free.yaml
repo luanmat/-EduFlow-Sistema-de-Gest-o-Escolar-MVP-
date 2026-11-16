@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: eduflow-demo
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 22.14.0
+      - key: NODE_ENV
+        value: production
+      # Apenas para demonstração: o sistema de arquivos do plano Free é efêmero.
+      - key: DB_PATH
+        value: /tmp/escola.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false

@@ -1,0 +1,15 @@
+# Dependencies and local configuration
+node_modules/
+.env
+.env.*
+!.env.example
+
+# Local SQLite files (production uses the Render persistent disk)
+*.db
+*.db-shm
+*.db-wal
+
+# Logs and operating-system files
+npm-debug.log*
+.DS_Store
+Thumbs.db
