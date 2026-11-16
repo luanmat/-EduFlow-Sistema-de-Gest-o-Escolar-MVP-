@@ -22,13 +22,12 @@ O EduFlow é um MVP web para apoiar a rotina de gestão escolar. A aplicação r
 | Autenticação | JSON Web Token (JWT) e bcryptjs |
 | Testes | Test runner nativo do Node.js (`node:test`) |
 | CI | GitHub Actions |
-| Deploy preparado | Render Blueprint (`render.yaml`) |
+| Deploy preparado | Render Blueprint (`render.yaml` pago e `render-free.yaml` para demonstração) |
 
 ## Requisitos
 
 - Node.js 22 ou superior.
 - npm.
-- Para executar localmente, Node.js 22 ou superior.
 - Para deploy gratuito de demonstração, use `render-free.yaml`; para manter o SQLite entre reinicializações, use o plano pago de `render.yaml` com disco persistente.
 
 ## Executar localmente
@@ -78,9 +77,9 @@ Há duas opções de Blueprint. Escolha apenas uma de acordo com o objetivo:
 
 ### Opção A — publicar sem pagar (demonstração)
 
-1. Mescle o pull request de preparação para deploy na branch `main`.
-2. Entre em https://dashboard.render.com/ e escolha **New → Blueprint**.
-3. Conecte o repositório EduFlow.
+1. Entre em https://dashboard.render.com/ e escolha **New → Blueprint**.
+2. Conecte o repositório EduFlow.
+3. Selecione a branch `deploy/render-readiness`.
 4. Na configuração do Blueprint, altere o caminho do arquivo para `render-free.yaml` (em vez do padrão `render.yaml`).
 5. Confira se o serviço aparece com plano **Free** e sem disco persistente antes de confirmar.
 6. Informe `ADMIN_EMAIL` e `ADMIN_PASSWORD` quando solicitado. Use uma senha exclusiva com pelo menos 12 caracteres.
