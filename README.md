@@ -2,7 +2,7 @@
 
 O EduFlow é um MVP web para apoiar a rotina de gestão escolar. A aplicação reúne cadastro de alunos e turmas, lançamento de frequência e consulta de históricos e relatórios.
 
-> **Situação da publicação:** o repositório contém duas configurações para o Render. `render.yaml` usa plano pago e disco persistente; `render-free.yaml` cria uma instância gratuita apenas para demonstração, com banco SQLite temporário. A aplicação ainda precisa ser implantada no painel do Render para receber uma URL pública.
+> **Situação da publicação:** existem configurações para Render nas branches de deploy e uma branch dedicada à Vercel (`deploy/vercel-demo`). A configuração da Vercel usa SQLite temporário apenas para demonstração; para persistência real, é necessária uma migração para banco externo.
 
 ## Funcionalidades
 
@@ -22,7 +22,7 @@ O EduFlow é um MVP web para apoiar a rotina de gestão escolar. A aplicação r
 | Autenticação | JSON Web Token (JWT) e bcryptjs |
 | Testes | Test runner nativo do Node.js (`node:test`) |
 | CI | GitHub Actions |
-| Deploy preparado | Render Blueprint (`render.yaml` pago e `render-free.yaml` para demonstração) |
+| Deploy preparado | Render Blueprint e Vercel (branch `deploy/vercel-demo`) |
 
 ## Requisitos
 
@@ -65,6 +65,40 @@ A suíte de smoke tests verifica:
 4. O bloqueio de uma rota protegida quando não há token.
 
 O comando também exibe o relatório de cobertura do Node.js. O GitHub Actions executa `npm ci` e `npm test` em pushes para `main` e para a branch de preparação, além de pull requests direcionados à `main`.
+
+## Publicar na Vercel (demonstração)
+
+O projeto tem uma branch dedicada à implantação na Vercel: `deploy/vercel-demo`. A aplicação Express é exportada como módulo padrão em `server.js`, formato reconhecido pela Vercel. O frontend fica em `public/index.html`, servido como arquivo estático pela CDN da plataforma.
+
+### Configuração do projeto
+
+1. Acesse https://vercel.com/new e importe o repositório do GitHub.
+2. Selecione a branch `deploy/vercel-demo`.
+3. Em **Framework Preset**, escolha **Other** caso a Vercel não detecte Express automaticamente.
+4. Mantenha **Root Directory** como `./`.
+5. Deixe **Build Command** e **Output Directory** sem sobrescritas; a Vercel detecta o Express e instala as dependências a partir do `package-lock.json`.
+6. Em **Environment Variables**, configure:
+   - `JWT_SECRET`: segredo aleatório com pelo menos 32 caracteres.
+   - `ADMIN_EMAIL`: e-mail administrativo inicial.
+   - `ADMIN_PASSWORD`: senha exclusiva com pelo menos 12 caracteres.
+   - `DB_PATH`: `/tmp/escola.db`.
+7. Aplique as variáveis ao ambiente **Production** e clique em **Deploy**.
+
+O arquivo `package.json` fixa Node.js na linha `22.x`. A Vercel reconhece `server.js` na raiz como entrada Express e requer que o aplicativo seja exportado como `default`. Os arquivos estáticos da pasta `public/` são disponibilizados pela Vercel; `express.static()` não é responsável por servi-los nesse ambiente.
+
+### Limitação do banco de dados nesta demonstração
+
+**A configuração atual utiliza SQLite em `/tmp/escola.db` apenas para permitir uma demonstração inicial.** A Vercel oferece sistema de arquivos somente leitura, com espaço temporário gravável em `/tmp`, que não é armazenamento compartilhado nem persistente entre instâncias. Portanto, dados cadastrados podem desaparecer após uma nova inicialização e não devem ser considerados armazenados com segurança.
+
+Não use esta implantação para dados escolares reais. Para manter cadastros e frequências, será necessário migrar o banco SQLite para um PostgreSQL gerenciado (por exemplo, Neon) e adaptar as consultas do backend. Essa migração ainda não está incluída nesta branch.
+
+### Teste após o deploy
+
+- Abra a URL HTTPS gerada pela Vercel e confirme que a tela de login aparece.
+- Teste `/healthz`; a resposta esperada é `{"status":"ok"}`.
+- Faça login usando o e-mail e a senha definidos em `ADMIN_EMAIL` e `ADMIN_PASSWORD`.
+
+A Vercel Hobby é destinada a projetos pessoais e não comerciais. Confira os limites e os termos do plano antes de utilizá-lo.
 
 ## Deploy no Render
 
