@@ -2,7 +2,7 @@
 
 O EduFlow é um MVP web para apoiar a rotina de gestão escolar. A aplicação reúne cadastro de alunos e turmas, lançamento de frequência e consulta de históricos e relatórios.
 
-> **Situação da publicação:** o repositório contém a configuração para deploy no Render, mas a aplicação ainda precisa ser implantada no painel do Render para receber uma URL pública de produção. Não use o endereço do GitHub como endereço de produção.
+> **Situação da publicação:** o repositório contém duas configurações para o Render. `render.yaml` usa plano pago e disco persistente; `render-free.yaml` cria uma instância gratuita apenas para demonstração, com banco SQLite temporário. A aplicação ainda precisa ser implantada no painel do Render para receber uma URL pública.
 
 ## Funcionalidades
 
@@ -28,7 +28,8 @@ O EduFlow é um MVP web para apoiar a rotina de gestão escolar. A aplicação r
 
 - Node.js 22 ou superior.
 - npm.
-- Para o deploy no Render com persistência SQLite, um serviço com disco persistente.
+- Para executar localmente, Node.js 22 ou superior.
+- Para deploy gratuito de demonstração, use `render-free.yaml`; para manter o SQLite entre reinicializações, use o plano pago de `render.yaml` com disco persistente.
 
 ## Executar localmente
 
@@ -68,7 +69,30 @@ O comando também exibe o relatório de cobertura do Node.js. O GitHub Actions e
 
 ## Deploy no Render
 
-O arquivo `render.yaml` define um Blueprint para publicar o EduFlow como Web Service Node.js.
+Há duas opções de Blueprint. Escolha apenas uma de acordo com o objetivo:
+
+| Arquivo | Plano | Banco | Uso indicado |
+|---|---|---|---|
+| `render-free.yaml` | Free | SQLite temporário em `/tmp/escola.db` | Demonstração e avaliação, sem garantia de retenção dos dados |
+| `render.yaml` | Starter (pago) | SQLite em disco persistente `/var/data/escola.db` | Uso com persistência do arquivo entre reinicializações |
+
+### Opção A — publicar sem pagar (demonstração)
+
+1. Mescle o pull request de preparação para deploy na branch `main`.
+2. Entre em https://dashboard.render.com/ e escolha **New → Blueprint**.
+3. Conecte o repositório EduFlow.
+4. Na configuração do Blueprint, altere o caminho do arquivo para `render-free.yaml` (em vez do padrão `render.yaml`).
+5. Confira se o serviço aparece com plano **Free** e sem disco persistente antes de confirmar.
+6. Informe `ADMIN_EMAIL` e `ADMIN_PASSWORD` quando solicitado. Use uma senha exclusiva com pelo menos 12 caracteres.
+7. Confirme a criação e aguarde o primeiro deploy. O Render fornecerá uma URL pública HTTPS.
+
+**Limitações do plano gratuito:** o serviço pode desligar depois de 15 minutos sem tráfego e levar cerca de um minuto para iniciar novamente quando receber uma nova solicitação. O sistema de arquivos é temporário: o SQLite será perdido quando o serviço reiniciar, desligar por inatividade ou receber um novo deploy. Portanto, esta opção serve apenas para demonstração; não cadastre dados escolares reais nem dependa dela para guardar alunos, responsáveis ou frequências.
+
+O Render também aplica limites mensais de horas gratuitas, banda e minutos de build. Acompanhe o consumo no painel e confira os limites atuais antes de publicar.
+
+### Opção B — usar SQLite com persistência (pago)
+
+O arquivo `render.yaml` define um Blueprint para publicar o EduFlow como Web Service Node.js com disco persistente.
 
 ### Configuração prevista
 
@@ -81,12 +105,12 @@ O arquivo `render.yaml` define um Blueprint para publicar o EduFlow como Web Ser
 - **Disco persistente:** montado em `/var/data`, com 1 GB.
 - **JWT_SECRET:** gerado pelo Render.
 
-### Publicar usando o Blueprint
+### Publicar a opção paga usando o Blueprint
 
 1. Mescle o pull request de preparação para deploy na branch `main`.
 2. Entre em https://dashboard.render.com/.
-3. Selecione **New → Blueprint**.
-4. Conecte o repositório EduFlow e escolha a branch `main`.
+3. Selecione **New → Blueprint** e conecte o repositório EduFlow.
+4. Use o arquivo padrão `render.yaml`.
 5. Confira os recursos e custos descritos pelo Render antes de confirmar a criação.
 6. Informe `ADMIN_EMAIL` e `ADMIN_PASSWORD`. Use um e-mail administrativo válido e uma senha exclusiva, forte e com pelo menos 12 caracteres.
 7. Aguarde o deploy terminar e abra a URL HTTPS fornecida pelo Render.
