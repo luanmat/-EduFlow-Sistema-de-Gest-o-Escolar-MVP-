@@ -2,7 +2,7 @@ name: Deploy readiness checks
 
 on:
   push:
-    branches: [main, deploy/render-readiness]
+    branches: [main, deploy/render-readiness, deploy/vercel-demo]
   pull_request:
     branches: [main]
 
