@@ -68,7 +68,7 @@ O comando também exibe o relatório de cobertura do Node.js. O GitHub Actions e
 
 ## Publicar na Vercel (demonstração)
 
-O projeto tem uma branch dedicada à implantação na Vercel: `deploy/vercel-demo`. A aplicação Express é exportada como módulo padrão em `server.js`, formato reconhecido pela Vercel. O frontend fica em `public/index.html`, servido como arquivo estático pela CDN da plataforma.
+O projeto tem uma branch dedicada à implantação na Vercel: `deploy/vercel-demo`. A aplicação Express é exportada como módulo padrão em `server.js`, formato reconhecido pela Vercel. Esta branch não usa Dockerfile nem exige comando de build próprio. O frontend fica em `public/index.html`, servido como arquivo estático pela CDN da plataforma.
 
 ### Configuração do projeto
 
